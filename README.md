@@ -146,9 +146,9 @@ Click **Open in Browser** when the notification appears, or use the **Ports** ta
 
 | | |
 |---|---|
-| ![Top categories by revenue](screenshots/02-chart-result.png) | ![Generated SQL](screenshots/03-generated-sql.png) |
+| ![Top categories by revenue](screenshots/02-top-categories-revenue-bar-chart.png) | ![Generated SQL](screenshots/03-generated-sql-transparency.png) |
 | **Query results with a bar chart** | **Generated SQL, shown for transparency** |
-| ![Scatter result](screenshots/04-scatter-result.png) | ![Payment types](screenshots/05-chat-history.png) |
+| ![Scatter result](screenshots/06-price-vs-freight-scatter.png) | ![Payment types](screenshots/05-revenue-per-year-trend.png) |
 | **Scatter plot result** | **Payment type popularity** |
 | ![State with most customers](screenshots/07-state-with-most-customers.png) | ![Multi-question chat](screenshots/08-multi-question-chat.png) |
 | **Which state has the most customers** | **Full question history, collapsible rows** |
