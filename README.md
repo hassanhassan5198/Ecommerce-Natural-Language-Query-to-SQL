@@ -185,4 +185,10 @@ Click **Open in Browser** when the notification appears, or use the **Ports** ta
 
 ---
 
+## 📄 License
+
+This project is licensed under the [MIT License](LICENSE).
+
+---
+
 *Built by [@hassanhassan5198](https://github.com/hassanhassan5198)*
