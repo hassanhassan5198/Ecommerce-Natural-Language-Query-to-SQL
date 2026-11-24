@@ -102,7 +102,7 @@ def convert_to_sql(user_question):
     prompt = f"{SCHEMA}\n\nUser Question: {user_question}\nSQL Query:"
 
     response = client.models.generate_content(
-        model="gemini-2.5-flash",
+        model="gemini-3.1-flash-lite",
         contents=prompt
     )
 

@@ -11,11 +11,12 @@ from google import genai
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 PYTHON_RUNS_DIR = os.path.join(ROOT_DIR, "python_runs")
 DB_PATH = os.path.join(ROOT_DIR, "ecommerce.db")
+MODEL = "gemini-3.1-flash-lite"
 
 # make python_runs importable so we can call database_setup directly
 sys.path.insert(0, PYTHON_RUNS_DIR)
 
-load_dotenv()
+load_dotenv(os.path.join(ROOT_DIR, ".env"), override=True)
 client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
 # --- AUTO BUILD DATABASE IF IT DOESN'T EXIST ---
@@ -53,11 +54,10 @@ RULES:
 def inject_css():
     st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Fraunces:ital,wght@0,400;0,700;1,400&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fraunces:ital,wght@0,400;0,700;1,400&display=swap');
 
     html, body, [class*="css"] {
         font-family: 'Plus Jakarta Sans', sans-serif;
-        background-color: #F5F4F0;
         color: #1A1A2E;
     }
 
@@ -71,37 +71,37 @@ def inject_css():
     /* ── SIDEBAR ── */
     [data-testid="stSidebar"] {
         background: #FFFFFF;
-        border-right: 1px solid #E8E4DC;
+        border-right: 1px solid #D9D3C7;
     }
 
     [data-testid="stSidebar"] .stMarkdown h3 {
         font-family: 'Plus Jakarta Sans', sans-serif;
-        font-size: 0.65rem;
+        font-size: 0.8rem;
         font-weight: 700;
-        letter-spacing: 0.18em;
+        letter-spacing: 0.12em;
         text-transform: uppercase;
-        color: #9B8EA0;
+        color: #4A4560;
         margin-bottom: 0.8rem;
     }
 
     [data-testid="stSidebar"] .stButton button {
-        background: #F9F8F6;
-        border: 1px solid #E8E4DC;
+        background: #FFFFFF;
+        border: 1px solid #D9D3C7;
         border-radius: 10px;
-        color: #4A4560;
+        color: #1A1A2E;
         font-family: 'Plus Jakarta Sans', sans-serif;
-        font-size: 0.78rem;
-        font-weight: 400;
+        font-size: 0.85rem;
+        font-weight: 500;
         padding: 0.65rem 0.9rem;
         text-align: left;
         transition: all 0.18s ease;
         margin-bottom: 5px;
-        line-height: 1.4;
+        line-height: 1.45;
     }
 
     [data-testid="stSidebar"] .stButton button:hover {
-        background: #FFF8EE;
-        border-color: #D4A843;
+        background: #FFF4DC;
+        border-color: #C9962B;
         color: #1A1A2E;
         transform: translateX(3px);
     }
@@ -123,7 +123,7 @@ def inject_css():
         right: -40px;
         width: 200px;
         height: 200px;
-        background: radial-gradient(circle, rgba(212, 168, 67, 0.15) 0%, transparent 70%);
+        background: radial-gradient(circle, rgba(242, 199, 92, 0.2) 0%, transparent 70%);
         border-radius: 50%;
     }
 
@@ -134,21 +134,21 @@ def inject_css():
         left: 30%;
         width: 150px;
         height: 150px;
-        background: radial-gradient(circle, rgba(212, 168, 67, 0.08) 0%, transparent 70%);
+        background: radial-gradient(circle, rgba(242, 199, 92, 0.1) 0%, transparent 70%);
         border-radius: 50%;
     }
 
     .header-badge {
         display: inline-block;
-        background: rgba(212, 168, 67, 0.15);
-        border: 1px solid rgba(212, 168, 67, 0.3);
+        background: rgba(242, 199, 92, 0.18);
+        border: 1px solid rgba(242, 199, 92, 0.5);
         border-radius: 20px;
         padding: 0.25rem 0.9rem;
-        font-size: 0.68rem;
-        font-weight: 600;
-        letter-spacing: 0.15em;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
         text-transform: uppercase;
-        color: #D4A843;
+        color: #F2C75C;
         margin-bottom: 1rem;
     }
 
@@ -163,14 +163,14 @@ def inject_css():
     }
 
     .header-title span {
-        color: #D4A843;
+        color: #F2C75C;
     }
 
     .header-subtitle {
-        font-size: 0.9rem;
-        color: rgba(255,255,255,0.55);
-        font-weight: 300;
-        max-width: 520px;
+        font-size: 1rem;
+        color: rgba(255,255,255,0.88);
+        font-weight: 400;
+        max-width: 560px;
         line-height: 1.6;
         margin: 0;
     }
@@ -185,7 +185,7 @@ def inject_css():
     .stat-pill {
         flex: 1;
         background: #FFFFFF;
-        border: 1px solid #E8E4DC;
+        border: 1px solid #D9D3C7;
         border-radius: 14px;
         padding: 1.2rem;
         text-align: center;
@@ -193,12 +193,12 @@ def inject_css():
     }
 
     .stat-pill:hover {
-        box-shadow: 0 4px 20px rgba(26,26,46,0.08);
+        box-shadow: 0 4px 20px rgba(26,26,46,0.1);
     }
 
     .stat-num {
         font-family: 'Fraunces', serif;
-        font-size: 1.7rem;
+        font-size: 1.9rem;
         font-weight: 700;
         color: #1A1A2E;
         display: block;
@@ -206,30 +206,19 @@ def inject_css():
     }
 
     .stat-lbl {
-        font-size: 0.65rem;
-        font-weight: 600;
-        letter-spacing: 0.12em;
-        text-transform: uppercase;
-        color: #9B8EA0;
-        display: block;
-        margin-top: 0.4rem;
-    }
-
-    /* ── SECTION LABEL ── */
-    .section-label {
-        font-size: 0.65rem;
+        font-size: 0.72rem;
         font-weight: 700;
-        letter-spacing: 0.18em;
+        letter-spacing: 0.08em;
         text-transform: uppercase;
-        color: #9B8EA0;
-        margin-bottom: 0.8rem;
+        color: #4A4560;
         display: block;
+        margin-top: 0.5rem;
     }
 
     /* ── CHAT MESSAGES ── */
     [data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-user"]) {
         background: #FFFFFF !important;
-        border: 1px solid #E8E4DC !important;
+        border: 1px solid #D9D3C7 !important;
         border-radius: 14px !important;
         padding: 1rem 1.4rem !important;
         margin-bottom: 8px;
@@ -237,46 +226,58 @@ def inject_css():
 
     [data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-assistant"]) {
         background: #FFF8EE !important;
-        border: 1px solid #F0E6CC !important;
+        border: 1px solid #E8D9B5 !important;
         border-radius: 14px !important;
         padding: 1rem 1.4rem !important;
         margin-bottom: 16px;
     }
 
+    [data-testid="stChatMessage"] p,
+    [data-testid="stChatMessage"] li {
+        color: #1A1A2E !important;
+        font-size: 0.95rem;
+    }
+
     /* ── CHAT INPUT ── */
     [data-testid="stChatInput"] {
         background: #FFFFFF !important;
-        border: 2px solid #E8E4DC !important;
+        border: 2px solid #C9C0B0 !important;
         border-radius: 16px !important;
     }
 
     [data-testid="stChatInput"]:focus-within {
-        border-color: #D4A843 !important;
-        box-shadow: 0 0 0 4px rgba(212, 168, 67, 0.1) !important;
+        border-color: #C9962B !important;
+        box-shadow: 0 0 0 4px rgba(201, 150, 43, 0.15) !important;
     }
 
     [data-testid="stChatInput"] textarea {
         font-family: 'Plus Jakarta Sans', sans-serif !important;
         color: #1A1A2E !important;
-        font-size: 0.9rem !important;
+        font-size: 0.95rem !important;
+    }
+
+    [data-testid="stChatInput"] textarea::placeholder {
+        color: #6B6478 !important;
+        opacity: 1 !important;
     }
 
     /* ── EXPANDER ── */
     [data-testid="stExpander"] {
         background: #FFFFFF !important;
-        border: 1px solid #E8E4DC !important;
+        border: 1px solid #D9D3C7 !important;
         border-radius: 12px !important;
     }
 
     [data-testid="stExpander"] summary {
-        color: #9B8EA0 !important;
-        font-size: 0.8rem !important;
+        color: #1A1A2E !important;
+        font-size: 0.9rem !important;
+        font-weight: 600 !important;
         font-family: 'Plus Jakarta Sans', sans-serif !important;
     }
 
     /* ── DATAFRAME ── */
     [data-testid="stDataFrame"] {
-        border: 1px solid #E8E4DC !important;
+        border: 1px solid #D9D3C7 !important;
         border-radius: 12px !important;
         overflow: hidden !important;
         background: #FFFFFF !important;
@@ -286,25 +287,25 @@ def inject_css():
     [data-testid="stAlert"] {
         border-radius: 12px !important;
         font-family: 'Plus Jakarta Sans', sans-serif !important;
-        font-size: 0.85rem !important;
+        font-size: 0.9rem !important;
     }
 
     /* ── DIVIDER ── */
-    hr { border-color: #E8E4DC !important; }
+    hr { border-color: #D9D3C7 !important; }
 
     /* ── FOOTER ── */
     .footer-txt {
-        font-size: 0.7rem;
-        color: #C4BCCA;
+        font-size: 0.8rem;
+        color: #4A4560;
         text-align: center;
-        letter-spacing: 0.06em;
+        letter-spacing: 0.04em;
         padding: 0.5rem 0 1rem;
     }
 
     /* scrollbar */
-    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar { width: 6px; }
     ::-webkit-scrollbar-track { background: #F5F4F0; }
-    ::-webkit-scrollbar-thumb { background: #D4C4A8; border-radius: 5px; }
+    ::-webkit-scrollbar-thumb { background: #C9C0B0; border-radius: 5px; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -315,22 +316,22 @@ def generate_chart(df):
 
     clean_theme = dict(
         paper_bgcolor="rgba(0,0,0,0)",
-        plot_bgcolor="rgba(249,248,246,0.6)",
-        font=dict(family="Plus Jakarta Sans", color="#4A4560", size=12),
+        plot_bgcolor="rgba(255,255,255,0.7)",
+        font=dict(family="Plus Jakarta Sans", color="#1A1A2E", size=13),
         xaxis=dict(
-            gridcolor="#F0ECE4",
-            linecolor="#E8E4DC",
-            tickfont=dict(color="#9B8EA0", size=11)
+            gridcolor="#ECE8DF",
+            linecolor="#C9C0B0",
+            tickfont=dict(color="#2D2842", size=12)
         ),
         yaxis=dict(
-            gridcolor="#F0ECE4",
-            linecolor="#E8E4DC",
-            tickfont=dict(color="#9B8EA0", size=11)
+            gridcolor="#ECE8DF",
+            linecolor="#C9C0B0",
+            tickfont=dict(color="#2D2842", size=12)
         ),
         margin=dict(l=20, r=20, t=30, b=60),
         hoverlabel=dict(
             bgcolor="#1A1A2E",
-            bordercolor="#D4A843",
+            bordercolor="#F2C75C",
             font=dict(family="Plus Jakarta Sans", color="#FFFFFF")
         )
     )
@@ -356,9 +357,9 @@ def generate_chart(df):
             df,
             x=numeric_cols[0],
             y=numeric_cols[1],
-            color_discrete_sequence=["#D4A843"]
+            color_discrete_sequence=["#B8860B"]
         )
-        fig.update_traces(marker=dict(size=8, opacity=0.7))
+        fig.update_traces(marker=dict(size=9, opacity=0.8))
         fig.update_layout(**clean_theme)
         return fig
 
@@ -369,7 +370,7 @@ def generate_chart(df):
 #  APP
 # ══════════════════════════════
 st.set_page_config(
-    page_title="NLQ — E-commerce Analytics App",
+    page_title="Natural Language Query — E-commerce Intelligence",
     page_icon="🛒",
     layout="wide"
 )
@@ -380,10 +381,10 @@ inject_css()
 with st.sidebar:
     st.markdown("""
     <div style='padding: 1.2rem 0 1rem 0;'>
-        <div style='font-family: Fraunces, serif; font-size: 1.3rem; font-weight: 700; color: #1A1A2E;'>NLQ — E-commerce</div>
-        <div style='font-size: 0.65rem; color: #9B8EA0; letter-spacing: 0.15em; text-transform: uppercase; margin-top: 2px;'>E-commerce Intelligence</div>
+        <div style='font-family: Fraunces, serif; font-size: 1.4rem; font-weight: 700; color: #1A1A2E;'>Natural Language Query</div>
+        <div style='font-size: 0.75rem; color: #4A4560; letter-spacing: 0.1em; text-transform: uppercase; margin-top: 4px; font-weight: 600;'>E-commerce Intelligence</div>
     </div>
-    <hr style='border-color: #E8E4DC; margin-bottom: 1.2rem;'>
+    <hr style='border-color: #D9D3C7; margin-bottom: 1.2rem;'>
     """, unsafe_allow_html=True)
 
     st.markdown("### 💡 Try these questions")
@@ -404,10 +405,10 @@ with st.sidebar:
             st.session_state.suggestion = s
 
     st.markdown("""
-    <hr style='border-color: #E8E4DC; margin-top: 1.5rem;'>
-    <div style='font-size: 0.7rem; color: #C4BCCA; line-height: 1.8; padding-top: 0.4rem;'>
+    <hr style='border-color: #D9D3C7; margin-top: 1.5rem;'>
+    <div style='font-size: 0.8rem; color: #2D2842; line-height: 1.9; padding-top: 0.4rem; font-weight: 500;'>
         🔒 Read-only secure connection<br>
-        ⚡ Powered by Gemini 2.5 Flash<br>
+        ⚡ Powered by Gemini 3.1 Flash Lite<br>
         🗄️ 1.6M rows · 9 tables
     </div>
     """, unsafe_allow_html=True)
@@ -416,7 +417,7 @@ with st.sidebar:
 st.markdown("""
 <div class="header-wrap">
     <div class="header-badge">AI-Powered · Natural Language · SQL</div>
-    <h1 class="header-title">Fin<span>Query</span></h1>
+    <h1 class="header-title">Natural Language <span>Query</span></h1>
     <p class="header-subtitle">Ask any business question in plain English and get instant answers from 1.6 million rows of real e-commerce data.</p>
 </div>
 """, unsafe_allow_html=True)
@@ -473,7 +474,7 @@ if question:
         with st.spinner("Analysing your question..."):
             try:
                 response = client.models.generate_content(
-                    model="gemini-2.5-flash",
+                    model=MODEL,
                     contents=SCHEMA + f"\n\nUser Question: {question}\nSQL Query:"
                 )
 
@@ -523,5 +524,5 @@ if question:
 # ── FOOTER ──
 st.divider()
 st.markdown("""
-<p class="footer-txt">NLQ — E-commerce &nbsp;·&nbsp; Gemini 2.5 Flash &nbsp;·&nbsp; SQLite &nbsp;·&nbsp; Streamlit &nbsp;·&nbsp; E-commerce Dataset &nbsp;·&nbsp; Read-only secure connection</p>
+<p class="footer-txt">NATURAL LANGUAGE QUERY &nbsp;·&nbsp; Gemini 3.1 Flash Lite &nbsp;·&nbsp; SQLite &nbsp;·&nbsp; Streamlit &nbsp;·&nbsp; E-commerce Dataset &nbsp;·&nbsp; Read-only secure connection</p>
 """, unsafe_allow_html=True)
