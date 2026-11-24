@@ -1,5 +1,6 @@
 import streamlit as st
 import sqlite3
+import time
 import pandas as pd
 import plotly.express as px
 import os
@@ -18,6 +19,39 @@ sys.path.insert(0, PYTHON_RUNS_DIR)
 
 load_dotenv(os.path.join(ROOT_DIR, ".env"), override=True)
 client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+
+# models to try, in order, if the first one is busy or unavailable
+FALLBACK_MODELS = [MODEL, "gemini-3.5-flash-lite", "gemini-flash-latest"]
+
+
+def generate_sql(prompt, max_attempts=3):
+    """Ask Gemini for SQL. Retries busy errors and falls back to other models."""
+    last_error = None
+
+    for model in FALLBACK_MODELS:
+        for attempt in range(max_attempts):
+            try:
+                response = client.models.generate_content(model=model, contents=prompt)
+                return response.text, model
+
+            except Exception as e:
+                last_error = e
+                msg = str(e)
+
+                # 503 / 500: server busy, retry the same model after a short wait
+                if "503" in msg or "UNAVAILABLE" in msg or "500" in msg:
+                    time.sleep(2 ** attempt)  # waits 1s, 2s, 4s
+                    continue
+
+                # 404 / 429: this model is unavailable or over quota, try the next model
+                if "404" in msg or "NOT_FOUND" in msg or "429" in msg or "RESOURCE_EXHAUSTED" in msg:
+                    break
+
+                # anything else (bad key, bad request) won't fix itself, so stop
+                raise
+
+    raise last_error
+
 
 # --- AUTO BUILD DATABASE IF IT DOESN'T EXIST ---
 if not os.path.exists(DB_PATH):
@@ -215,32 +249,76 @@ def inject_css():
         margin-top: 0.5rem;
     }
 
-    /* ── CHAT MESSAGES ── */
-    [data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-user"]) {
+    /* ── QUESTION ROWS (collapsible) ── */
+    [data-testid="stExpander"] {
         background: #FFFFFF !important;
         border: 1px solid #D9D3C7 !important;
-        border-radius: 14px !important;
-        padding: 1rem 1.4rem !important;
-        margin-bottom: 8px;
+        border-radius: 12px !important;
+        margin-bottom: 12px !important;
+        box-shadow: 0 1px 3px rgba(26,26,46,0.06);
     }
 
-    [data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-assistant"]) {
-        background: #FFF8EE !important;
-        border: 1px solid #E8D9B5 !important;
-        border-radius: 14px !important;
-        padding: 1rem 1.4rem !important;
-        margin-bottom: 16px;
-    }
-
-    [data-testid="stChatMessage"] p,
-    [data-testid="stChatMessage"] li {
+    /* the clickable header row: keep it light in every state */
+    [data-testid="stExpander"] summary,
+    [data-testid="stExpander"] summary:hover,
+    [data-testid="stExpander"] summary:focus,
+    [data-testid="stExpander"] summary:focus-visible,
+    [data-testid="stExpander"] summary:active {
+        background-color: #FFFFFF !important;
         color: #1A1A2E !important;
-        font-size: 0.95rem;
+        font-size: 1rem !important;
+        font-weight: 600 !important;
+        font-family: 'Plus Jakarta Sans', sans-serif !important;
+        padding: 0.8rem 1rem !important;
+        border-radius: 12px !important;
+        outline: none !important;
     }
 
-    /* ── CHAT INPUT ── */
-    [data-testid="stChatInput"] {
+    /* the question text and the arrow icon, in every state */
+    [data-testid="stExpander"] summary p,
+    [data-testid="stExpander"] summary span,
+    [data-testid="stExpander"] summary svg,
+    [data-testid="stExpander"] summary:hover p,
+    [data-testid="stExpander"] summary:hover span,
+    [data-testid="stExpander"] summary:hover svg {
+        color: #1A1A2E !important;
+        fill: #1A1A2E !important;
+    }
+
+    /* a gold hint on hover, on a light background */
+    [data-testid="stExpander"] summary:hover {
+        background-color: #FFF8EE !important;
+    }
+
+    [data-testid="stExpander"] summary:hover p {
+        color: #9A6F12 !important;
+    }
+
+    /* show the full SQL without a scrollbar */
+    [data-testid="stExpander"] pre {
+        max-height: none !important;
+        overflow: visible !important;
+        white-space: pre-wrap !important;
+        word-break: break-word !important;
+    }
+
+    [data-testid="stExpander"] pre code {
+        white-space: pre-wrap !important;
+    }
+
+    /* ── CHAT INPUT (search bar): light background at every layer ── */
+    [data-testid="stChatInput"],
+    [data-testid="stChatInput"] > div,
+    [data-testid="stChatInput"] > div > div,
+    [data-testid="stChatInputContainer"],
+    [data-testid="stBottom"],
+    [data-testid="stBottom"] > div,
+    [data-testid="stBottomBlockContainer"] {
+        background-color: #FFFFFF !important;
         background: #FFFFFF !important;
+    }
+
+    [data-testid="stChatInput"] {
         border: 2px solid #C9C0B0 !important;
         border-radius: 16px !important;
     }
@@ -251,28 +329,22 @@ def inject_css():
     }
 
     [data-testid="stChatInput"] textarea {
-        font-family: 'Plus Jakarta Sans', sans-serif !important;
+        background-color: #FFFFFF !important;
         color: #1A1A2E !important;
+        -webkit-text-fill-color: #1A1A2E !important;
+        font-family: 'Plus Jakarta Sans', sans-serif !important;
         font-size: 0.95rem !important;
+        caret-color: #1A1A2E !important;
     }
 
     [data-testid="stChatInput"] textarea::placeholder {
         color: #6B6478 !important;
+        -webkit-text-fill-color: #6B6478 !important;
         opacity: 1 !important;
     }
 
-    /* ── EXPANDER ── */
-    [data-testid="stExpander"] {
-        background: #FFFFFF !important;
-        border: 1px solid #D9D3C7 !important;
-        border-radius: 12px !important;
-    }
-
-    [data-testid="stExpander"] summary {
-        color: #1A1A2E !important;
-        font-size: 0.9rem !important;
-        font-weight: 600 !important;
-        font-family: 'Plus Jakarta Sans', sans-serif !important;
+    [data-testid="stChatInput"] button svg {
+        fill: #1A1A2E !important;
     }
 
     /* ── DATAFRAME ── */
@@ -366,6 +438,45 @@ def generate_chart(df):
     return None
 
 
+def render_answer(item):
+    """Draws the answer body: SQL, status, chart, and table."""
+    with st.expander("🔍 View generated SQL"):
+        st.code(item["sql"], language="sql", wrap_lines=True)
+
+    if item.get("data") is None or item["data"].empty:
+        st.warning("No results found. Try rephrasing your question.")
+        return
+
+    st.success(f"✓ {len(item['data'])} rows returned")
+    fig = generate_chart(item["data"])
+    if fig:
+        st.plotly_chart(fig, use_container_width=True)
+    st.dataframe(item["data"], use_container_width=True)
+
+
+def run_query(question):
+    """Runs the full pipeline for one question and returns the result dict."""
+    item = {"question": question, "sql": None, "data": None, "error": None}
+    try:
+        raw_text, _ = generate_sql(SCHEMA + f"\n\nUser Question: {question}\nSQL Query:")
+        sql = raw_text.strip().replace("```sql", "").replace("```", "").strip()
+        item["sql"] = sql
+
+        conn = sqlite3.connect(f"file:{DB_PATH}?mode=ro", uri=True)
+        item["data"] = pd.read_sql_query(sql, conn)
+        conn.close()
+
+    except Exception as e:
+        msg = str(e)
+        if "429" in msg or "RESOURCE_EXHAUSTED" in msg:
+            item["error"] = "⏳ Rate limit reached. Please wait 1-2 minutes before asking another question."
+        elif "503" in msg or "UNAVAILABLE" in msg:
+            item["error"] = "⏳ Google's AI service is busy right now. The app tried several times without success. Wait 30 seconds and ask again."
+        else:
+            item["error"] = f"Something went wrong: {e}"
+    return item
+
+
 # ══════════════════════════════
 #  APP
 # ══════════════════════════════
@@ -434,92 +545,40 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ── SESSION STATE ──
-if "messages" not in st.session_state:
-    st.session_state.messages = []
+if "history" not in st.session_state:
+    st.session_state.history = []      # newest first
 if "is_processing" not in st.session_state:
     st.session_state.is_processing = False
 
-# ── CHAT HISTORY ──
-for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
-        st.markdown(message["content"])
-        if "sql" in message:
-            with st.expander("🔍 View generated SQL"):
-                st.code(message["sql"], language="sql")
-        if "data" in message:
-            fig = generate_chart(message["data"])
-            if fig:
-                st.plotly_chart(fig, use_container_width=True)
-            st.dataframe(message["data"], use_container_width=True)
-
-# ── CHAT INPUT ──
+# ── INPUT ──
 default = st.session_state.pop("suggestion", "")
-
-if st.session_state.is_processing:
-    st.chat_input("Please wait — query is running...", disabled=True)
-    prompt = None
-else:
-    prompt = st.chat_input("Ask a business question e.g. What are the top 10 cities by number of orders?")
-
+prompt = st.chat_input("Ask a business question e.g. What are the top 10 cities by number of orders?")
 question = default or prompt
 
+# ── NEW QUESTION: show the question row immediately, then fill in the answer ──
 if question:
-    st.session_state.messages.append({"role": "user", "content": question})
-    with st.chat_message("user"):
-        st.markdown(question)
+    # 1. add the question to history right away so it appears at once
+    pending = {"question": question, "sql": None, "data": None, "error": None, "pending": True}
+    st.session_state.history.insert(0, pending)
 
-    st.session_state.is_processing = True
+# ── HISTORY: one collapsible row per question ──
+for idx, item in enumerate(st.session_state.history):
+    label = f"💬 {item['question']}"
+    is_newest = idx == 0
+    with st.expander(label, expanded=is_newest):
+        if item.get("pending"):
+            # 2. the row is visible while Gemini works; the spinner shows progress
+            with st.spinner("Analysing your question..."):
+                result = run_query(item["question"])
+            # 3. store the answer on the same item, then draw it
+            item.update(result)
+            item["pending"] = False
+            st.rerun()
 
-    with st.chat_message("assistant"):
-        with st.spinner("Analysing your question..."):
-            try:
-                response = client.models.generate_content(
-                    model=MODEL,
-                    contents=SCHEMA + f"\n\nUser Question: {question}\nSQL Query:"
-                )
-
-                sql = response.text.strip()
-                sql = sql.replace("```sql", "").replace("```", "").strip()
-
-                with st.expander("🔍 View generated SQL"):
-                    st.code(sql, language="sql")
-
-                conn = sqlite3.connect(f"file:{DB_PATH}?mode=ro", uri=True)
-                df = pd.read_sql_query(sql, conn)
-                conn.close()
-
-                if df.empty:
-                    st.warning("No results found. Try rephrasing your question.")
-                    st.session_state.messages.append({
-                        "role": "assistant",
-                        "content": "No results found for that question.",
-                        "sql": sql
-                    })
-                else:
-                    st.success(f"✓ {len(df)} rows returned")
-
-                    fig = generate_chart(df)
-                    if fig:
-                        st.plotly_chart(fig, use_container_width=True)
-
-                    st.dataframe(df, use_container_width=True)
-
-                    st.session_state.messages.append({
-                        "role": "assistant",
-                        "content": f"Here are the results for: *{question}*",
-                        "sql": sql,
-                        "data": df
-                    })
-
-            except Exception as e:
-                error_msg = str(e)
-                if "429" in error_msg or "RESOURCE_EXHAUSTED" in error_msg:
-                    st.warning("⏳ Rate limit reached. Please wait 1-2 minutes before asking another question.")
-                else:
-                    st.error(f"Something went wrong: {e}")
-
-            finally:
-                st.session_state.is_processing = False
+        if item["error"]:
+            st.error(item["error"])
+        else:
+            render_answer(item)
 
 # ── FOOTER ──
 st.divider()
