@@ -4,7 +4,7 @@
 
 Natural Language Query is an AI-powered analytics assistant. It turns plain-English questions into SQL, runs them against a real e-commerce database, and shows the results with the generated query visible for full transparency.
 
-![Landing page](screenshots/01-landing.png)
+![Landing page](screenshots/01-landing-page.png)
 
 ---
 
